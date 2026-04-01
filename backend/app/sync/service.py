@@ -1,0 +1,87 @@
+"""Sync service — generates FIT files and uploads to Strava."""
+
+import io
+from datetime import datetime
+
+from stravalib import Client as StravaClient
+
+from app.auth.crypto import decrypt
+from app.models import StravaToken
+from app.workouts.fit_generator import generate_fit_file
+from app.workouts.service import get_otf_telemetry
+
+
+async def sync_workout(
+    email: str,
+    password: str,
+    strava_token: StravaToken,
+    otf_workout: dict,
+    existing_strava_id: int | None = None,
+) -> dict:
+    """Generate a FIT file from OTF data and upload to Strava.
+
+    If existing_strava_id is provided, deletes the old activity first.
+    """
+    client = StravaClient(access_token=decrypt(strava_token.access_token))
+
+    # Fetch full telemetry
+    telemetry = await get_otf_telemetry(email, password, otf_workout["id"])
+
+    # Build HR data for FIT file
+    hr_data = [
+        {"timestamp": t["timestamp"], "hr": t["hr"]}
+        for t in telemetry
+        if t.get("timestamp") and t.get("hr")
+    ]
+
+    # Determine sport type from class type
+    class_type = otf_workout.get("class_type", "").lower()
+    if "tread" in class_type or "run" in class_type:
+        sport_type = "running"
+    elif "row" in class_type:
+        sport_type = "rowing"
+    else:
+        sport_type = "training"
+
+    # Generate FIT file
+    fit_bytes = generate_fit_file(
+        start_time=otf_workout["date"],
+        duration_minutes=otf_workout["duration_minutes"],
+        total_calories=otf_workout["calories"],
+        avg_hr=otf_workout["avg_hr"],
+        max_hr=otf_workout["max_hr"],
+        hr_data=hr_data,
+        sport_type=sport_type,
+    )
+
+    # Delete existing Strava activity if replacing
+    if existing_strava_id:
+        try:
+            client.delete_activity(existing_strava_id)
+        except Exception:
+            pass  # Activity may already be deleted
+
+    # Upload FIT file to Strava
+    workout_name = f"Orangetheory {otf_workout.get('class_type', 'Workout')}"
+    description = (
+        f"🍊 {otf_workout['calories']} cal · "
+        f"{otf_workout['splat_points']} splats · "
+        f"Synced by SplatSync"
+    )
+
+    upload = client.upload_activity(
+        activity_file=io.BytesIO(fit_bytes),
+        data_type="fit",
+        name=workout_name,
+        description=description,
+    )
+
+    # Wait for upload to process
+    activity = upload.wait()
+
+    return {
+        "strava_activity_id": activity.id,
+        "strava_url": f"https://strava.com/activities/{activity.id}",
+        "name": workout_name,
+        "synced_at": datetime.utcnow().isoformat(),
+    }
