@@ -30,7 +30,8 @@ class StravaToken(SQLModel, table=True):
 class OtfSession(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     user_id: str = Field(foreign_key="user.id", index=True)
-    cognito_token: str  # encrypted - NOT the password
+    otf_email: str  # encrypted
+    otf_password: str  # encrypted — stored for API calls, user can disconnect to delete
     token_expires_at: Optional[datetime] = None
 
 

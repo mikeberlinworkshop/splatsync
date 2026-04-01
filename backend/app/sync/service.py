@@ -11,25 +11,22 @@ from app.workouts.fit_generator import generate_fit_file
 from app.workouts.service import get_otf_telemetry
 
 
-async def sync_workout(
-    email: str,
-    password: str,
+def sync_workout(
+    otf_email: str,
+    otf_password: str,
     strava_token: StravaToken,
     otf_workout: dict,
     existing_strava_id: int | None = None,
 ) -> dict:
-    """Generate a FIT file from OTF data and upload to Strava.
-
-    If existing_strava_id is provided, deletes the old activity first.
-    """
+    """Generate a FIT file from OTF data and upload to Strava."""
     client = StravaClient(access_token=decrypt(strava_token.access_token))
 
     # Fetch full telemetry
-    telemetry = await get_otf_telemetry(email, password, otf_workout["id"])
+    telemetry = get_otf_telemetry(otf_email, otf_password, otf_workout["id"])
 
-    # Build HR data for FIT file
     hr_data = [
-        {"timestamp": t["timestamp"], "hr": t["hr"]}
+        {"timestamp": datetime.fromisoformat(t["timestamp"]) if isinstance(t["timestamp"], str) else t["timestamp"],
+         "hr": t["hr"]}
         for t in telemetry
         if t.get("timestamp") and t.get("hr")
     ]
@@ -43,9 +40,14 @@ async def sync_workout(
     else:
         sport_type = "training"
 
+    # Parse start time
+    start_time = otf_workout["date"]
+    if isinstance(start_time, str):
+        start_time = datetime.fromisoformat(start_time)
+
     # Generate FIT file
     fit_bytes = generate_fit_file(
-        start_time=otf_workout["date"],
+        start_time=start_time,
         duration_minutes=otf_workout["duration_minutes"],
         total_calories=otf_workout["calories"],
         avg_hr=otf_workout["avg_hr"],
@@ -59,13 +61,13 @@ async def sync_workout(
         try:
             client.delete_activity(existing_strava_id)
         except Exception:
-            pass  # Activity may already be deleted
+            pass
 
     # Upload FIT file to Strava
     workout_name = f"Orangetheory {otf_workout.get('class_type', 'Workout')}"
     description = (
-        f"🍊 {otf_workout['calories']} cal · "
-        f"{otf_workout['splat_points']} splats · "
+        f"{otf_workout['calories']} cal | "
+        f"{otf_workout['splat_points']} splats | "
         f"Synced by SplatSync"
     )
 
@@ -76,7 +78,6 @@ async def sync_workout(
         description=description,
     )
 
-    # Wait for upload to process
     activity = upload.wait()
 
     return {

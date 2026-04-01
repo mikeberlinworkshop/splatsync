@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from app.auth.crypto import decrypt
 from app.auth.dependencies import get_current_user
 from app.db import get_session
 from app.models import OtfSession, StravaToken, User
@@ -11,12 +12,12 @@ router = APIRouter(prefix="/api/sync", tags=["sync"])
 
 
 class SyncRequest(BaseModel):
-    otf_workout: dict  # The OTF workout data from the comparison
-    strava_activity_id: int | None = None  # Existing Strava activity to replace
+    otf_workout: dict
+    strava_activity_id: int | None = None
 
 
 @router.post("/execute")
-async def execute_sync(
+def execute_sync(
     body: SyncRequest,
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
@@ -28,8 +29,6 @@ async def execute_sync(
     if not strava_token:
         raise HTTPException(status_code=400, detail="Strava not connected")
 
-    # Note: We need OTF credentials again for telemetry fetch.
-    # For now, require re-auth. Future: use cached Cognito tokens.
     otf_session = session.exec(
         select(OtfSession).where(OtfSession.user_id == user.id)
     ).first()
@@ -37,9 +36,9 @@ async def execute_sync(
         raise HTTPException(status_code=400, detail="OTF not connected")
 
     try:
-        result = await sync_workout(
-            email=user.email,
-            password="",  # Will need re-auth flow
+        result = sync_workout(
+            otf_email=decrypt(otf_session.otf_email),
+            otf_password=decrypt(otf_session.otf_password),
             strava_token=strava_token,
             otf_workout=body.otf_workout,
             existing_strava_id=body.strava_activity_id,

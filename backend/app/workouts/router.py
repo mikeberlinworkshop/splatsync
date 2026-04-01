@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/workouts", tags=["workouts"])
 
 
 @router.get("/compare")
-async def compare_workouts(
+def compare_workouts(
     days: int = 30,
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
@@ -33,16 +33,14 @@ async def compare_workouts(
     if not strava_token:
         raise HTTPException(status_code=400, detail="Strava not connected")
 
-    # Fetch from both sources
-    # Note: OTF requires re-auth with email/password for API calls.
-    # For now, we return an error if the session is expired.
-    # Future: prompt re-auth on the frontend.
     try:
-        otf_workouts = await get_otf_workouts(user.email, "", days=days)
-    except Exception:
+        otf_email = decrypt(otf_session.otf_email)
+        otf_password = decrypt(otf_session.otf_password)
+        otf_workouts = get_otf_workouts(otf_email, otf_password, days=days)
+    except Exception as e:
         raise HTTPException(
             status_code=401,
-            detail="OTF session expired. Please reconnect.",
+            detail=f"OTF session error: {str(e)}. Please reconnect.",
         )
 
     strava_activities = get_strava_activities(strava_token, days=days)

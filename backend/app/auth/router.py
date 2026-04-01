@@ -36,11 +36,12 @@ async def otf_login(
 ):
     """Authenticate with OTF. Password is used once and never stored."""
     from otf_api import Otf
+    from otf_api.auth.user import OtfUser
 
     try:
-        otf = Otf(body.email, body.password)
-        # Verify auth worked by fetching member details
-        member = await otf.get_member_detail()
+        otf_user = OtfUser(username=body.email, password=body.password)
+        otf = Otf(otf_user)
+        member = otf.get_member_detail()
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"OTF login failed: {str(e)}")
 
@@ -52,18 +53,20 @@ async def otf_login(
         session.commit()
         session.refresh(user)
 
-    # Cache the Cognito tokens (NOT the password)
+    # Cache encrypted credentials for API calls (user can disconnect to delete)
     existing = session.exec(
         select(OtfSession).where(OtfSession.user_id == user.id)
     ).first()
     if existing:
-        existing.cognito_token = encrypt(otf._api.auth.id_token or "")
-        existing.token_expires_at = datetime.utcnow() + timedelta(hours=1)
+        existing.otf_email = encrypt(body.email)
+        existing.otf_password = encrypt(body.password)
+        existing.token_expires_at = datetime.utcnow() + timedelta(days=30)
     else:
         otf_session = OtfSession(
             user_id=user.id,
-            cognito_token=encrypt(otf._api.auth.id_token or ""),
-            token_expires_at=datetime.utcnow() + timedelta(hours=1),
+            otf_email=encrypt(body.email),
+            otf_password=encrypt(body.password),
+            token_expires_at=datetime.utcnow() + timedelta(days=30),
         )
         session.add(otf_session)
     session.commit()
