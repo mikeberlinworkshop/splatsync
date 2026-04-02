@@ -55,6 +55,23 @@ def sync_workout(
     if isinstance(start_time, str):
         start_time = datetime.fromisoformat(start_time)
 
+    # Convert treadmill distance from miles to meters (if available)
+    tread_distance_meters = None
+    if otf_workout.get("tread_distance_miles"):
+        tread_distance_meters = float(otf_workout["tread_distance_miles"]) * 1609.34
+
+    # Convert rower distance (already in meters from OTF API)
+    rower_distance_meters = None
+    if otf_workout.get("rower_distance_meters"):
+        rower_distance_meters = float(otf_workout["rower_distance_meters"])
+
+    # Pick the right distance for the sport type
+    distance_meters = None
+    if sport_type == "running" and tread_distance_meters:
+        distance_meters = tread_distance_meters
+    elif sport_type == "rowing" and rower_distance_meters:
+        distance_meters = rower_distance_meters
+
     # Generate FIT file
     fit_bytes = generate_fit_file(
         start_time=start_time,
@@ -64,19 +81,26 @@ def sync_workout(
         max_hr=otf_workout["max_hr"],
         hr_data=hr_data,
         sport_type=sport_type,
+        tread_distance_meters=distance_meters,
     )
 
     # Delete existing Strava activity if replacing (stravalib v2 lacks delete_activity)
     if existing_strava_id:
         try:
             import httpx
-            httpx.delete(
+            resp = httpx.delete(
                 f"https://www.strava.com/api/v3/activities/{existing_strava_id}",
                 headers={"Authorization": f"Bearer {decrypt(strava_token.access_token)}"},
             )
-            logger.info("Deleted existing Strava activity %s before re-upload", existing_strava_id)
-        except Exception:
-            logger.warning("Failed to delete Strava activity %s, may create duplicate", existing_strava_id)
+            if resp.status_code == 204:
+                logger.info("Deleted existing Strava activity %s before re-upload", existing_strava_id)
+            else:
+                logger.warning(
+                    "Strava DELETE returned %s for activity %s: %s — may create duplicate",
+                    resp.status_code, existing_strava_id, resp.text[:200],
+                )
+        except Exception as exc:
+            logger.warning("Failed to delete Strava activity %s: %s — may create duplicate", existing_strava_id, exc)
 
     # Upload FIT file to Strava
     workout_name = f"Orangetheory - {otf_workout.get('class_type', 'Workout')}"

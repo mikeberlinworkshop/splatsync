@@ -72,21 +72,26 @@ def generate_fit_file(
 
     # Record messages — one per HR data point
     if hr_data:
-        for point in hr_data:
+        num_points = len(hr_data)
+        for i, point in enumerate(hr_data):
             record = RecordMessage()
             record.timestamp = datetime_to_fit_timestamp(point["timestamp"])
             record.heart_rate = point["hr"]
-            if tread_distance_meters and "distance" in point:
-                record.distance = point["distance"]
+            # Distribute total distance evenly across records as cumulative distance
+            if tread_distance_meters and num_points > 0:
+                record.distance = tread_distance_meters * (i + 1) / num_points
             builder.add(record)
     else:
         # No telemetry — generate synthetic records at 1-minute intervals
+        num_points = max(duration_minutes, 1)
         for i in range(duration_minutes):
             record = RecordMessage()
             record.timestamp = datetime_to_fit_timestamp(
                 start_time + timedelta(minutes=i)
             )
             record.heart_rate = avg_hr
+            if tread_distance_meters:
+                record.distance = tread_distance_meters * (i + 1) / num_points
             builder.add(record)
 
     # Stop event
@@ -102,8 +107,8 @@ def generate_fit_file(
     session_msg = SessionMessage()
     session_msg.timestamp = datetime_to_fit_timestamp(end_time)
     session_msg.start_time = datetime_to_fit_timestamp(start_time)
-    session_msg.total_elapsed_time = duration_minutes * 60 * 1000  # fit-tool uses milliseconds
-    session_msg.total_timer_time = duration_minutes * 60 * 1000
+    session_msg.total_elapsed_time = duration_minutes * 60  # seconds (fit-tool applies scale internally)
+    session_msg.total_timer_time = duration_minutes * 60
     session_msg.total_calories = total_calories
     session_msg.avg_heart_rate = avg_hr
     session_msg.max_heart_rate = max_hr
