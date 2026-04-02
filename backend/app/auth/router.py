@@ -113,27 +113,30 @@ async def strava_callback(
 ):
     """Handle Strava OAuth callback."""
     client = StravaClient()
-    token_response = client.exchange_code_for_token(
+    token_info, athlete = client.exchange_code_for_token(
         client_id=int(settings.strava_client_id),
         client_secret=settings.strava_client_secret,
         code=code,
+        return_athlete=True,
     )
+
+    athlete_id = athlete.id if athlete else 0
 
     existing = session.exec(
         select(StravaToken).where(StravaToken.user_id == user.id)
     ).first()
     if existing:
-        existing.access_token = encrypt(token_response["access_token"])
-        existing.refresh_token = encrypt(token_response["refresh_token"])
-        existing.expires_at = datetime.fromtimestamp(token_response["expires_at"])
-        existing.athlete_id = token_response["athlete"]["id"]
+        existing.access_token = encrypt(token_info["access_token"])
+        existing.refresh_token = encrypt(token_info["refresh_token"])
+        existing.expires_at = datetime.fromtimestamp(token_info["expires_at"])
+        existing.athlete_id = athlete_id
     else:
         strava_token = StravaToken(
             user_id=user.id,
-            access_token=encrypt(token_response["access_token"]),
-            refresh_token=encrypt(token_response["refresh_token"]),
-            expires_at=datetime.fromtimestamp(token_response["expires_at"]),
-            athlete_id=token_response["athlete"]["id"],
+            access_token=encrypt(token_info["access_token"]),
+            refresh_token=encrypt(token_info["refresh_token"]),
+            expires_at=datetime.fromtimestamp(token_info["expires_at"]),
+            athlete_id=athlete_id,
         )
         session.add(strava_token)
     session.commit()
