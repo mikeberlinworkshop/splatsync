@@ -49,7 +49,7 @@ export function WorkoutDetail({ comparison, onSync, syncingId }: WorkoutDetailPr
                 <Stat label="Tread Distance" value={`${otf.tread_distance_miles.toFixed(2)} mi`} color="text-otf-orange" />
               )}
               {otf.tread_avg_pace && (
-                <Stat label="Avg Pace" value={`${otf.tread_avg_pace}/mi`} color="text-otf-orange" />
+                <Stat label="Avg Pace" value={otf.tread_avg_pace.replace(/ min\/mile/i, '/mi')} color="text-otf-orange" />
               )}
               {otf.rower_distance_meters != null && (
                 <Stat label="Rower Distance" value={`${Math.round(otf.rower_distance_meters).toLocaleString()} m`} color="text-otf-orange" />
@@ -83,7 +83,7 @@ export function WorkoutDetail({ comparison, onSync, syncingId }: WorkoutDetailPr
                 <Stat label="Avg Speed" value={`${mpsToMph(strava.avg_speed)} mph`} color="text-strava-orange" />
               )}
               <Stat label="Duration" value={`${Math.round(strava.duration_minutes)} min`} color="text-strava-orange" />
-              <Stat label="Sport Type" value={strava.sport_type} color="text-strava-orange" />
+              <Stat label="Sport Type" value={strava.sport_type.replace(/root='|'/g, '')} color="text-strava-orange" />
             </div>
           </div>
         )}
