@@ -25,6 +25,7 @@ export function Dashboard() {
     email: null as string | null,
   });
   const [showOtfModal, setShowOtfModal] = useState(false);
+  const [days, setDays] = useState(30);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -41,7 +42,7 @@ export function Dashboard() {
     setLoading(true);
     setError('');
     try {
-      const data = await api.compareWorkouts(30);
+      const data = await api.compareWorkouts(days);
       setComparisons(data.comparisons);
       setSummary(data.summary);
     } catch (err) {
@@ -49,7 +50,7 @@ export function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [days]);
 
   useEffect(() => {
     checkAuth().then((status) => {
@@ -59,7 +60,21 @@ export function Dashboard() {
         setLoading(false);
       }
     });
-  }, [checkAuth, loadComparisons]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Reload when days changes (skip initial mount)
+  const [initialized, setInitialized] = useState(false);
+  useEffect(() => {
+    if (!initialized) {
+      setInitialized(true);
+      return;
+    }
+    if (authStatus.otf_connected && authStatus.strava_connected) {
+      loadComparisons();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days]);
 
   const handleSync = async (comparison: Comparison) => {
     if (!comparison.otf) return;
@@ -168,16 +183,29 @@ export function Dashboard() {
         {/* Dashboard content */}
         {bothConnected && (
           <>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
               <h1 className="text-2xl font-bold text-text-primary">Your Workouts</h1>
-              <button
-                onClick={loadComparisons}
-                disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 bg-surface-light hover:bg-surface-lighter border border-surface-lighter rounded-lg text-sm text-text-secondary transition-colors disabled:opacity-50"
-              >
-                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-                Refresh
-              </button>
+              <div className="flex items-center gap-2">
+                <select
+                  value={days}
+                  onChange={(e) => setDays(Number(e.target.value))}
+                  className="px-3 py-2 bg-surface-light border border-surface-lighter rounded-lg text-sm text-text-secondary appearance-none cursor-pointer"
+                >
+                  <option value={7}>Last 7 days</option>
+                  <option value={14}>Last 14 days</option>
+                  <option value={30}>Last 30 days</option>
+                  <option value={60}>Last 60 days</option>
+                  <option value={90}>Last 90 days</option>
+                </select>
+                <button
+                  onClick={loadComparisons}
+                  disabled={loading}
+                  className="flex items-center gap-2 px-4 py-2 bg-surface-light hover:bg-surface-lighter border border-surface-lighter rounded-lg text-sm text-text-secondary transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                  Refresh
+                </button>
+              </div>
             </div>
 
             {!loading && !error && (
@@ -208,11 +236,11 @@ export function Dashboard() {
 
             {!loading && !error && comparisons.length === 0 && (
               <div className="text-center py-20 text-text-muted">
-                No workouts found in the last 30 days.
+                No workouts found in the last {days} days.
               </div>
             )}
 
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {comparisons.map((c, i) => (
                 <WorkoutCard
                   key={c.otf?.id || c.strava?.id || i}

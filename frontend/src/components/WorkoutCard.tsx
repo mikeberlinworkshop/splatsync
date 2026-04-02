@@ -37,12 +37,34 @@ function StatusBadge({ status, needsFix }: { status: string; needsFix: boolean }
   );
 }
 
+const CLASS_TYPE_BADGES: Record<string, string> = {
+  'Tread 50': 'bg-red-500/20 text-red-400',
+  'Strength 50': 'bg-purple-500/20 text-purple-400',
+  'ESP': 'bg-otf-orange/20 text-otf-orange-light',
+  '2G': 'bg-blue-500/20 text-blue-400',
+  '3G': 'bg-green-500/20 text-green-400',
+  'Lift 45': 'bg-purple-500/20 text-purple-400',
+  'Tornado': 'bg-yellow-500/20 text-yellow-400',
+};
+
+function ClassTypeBadge({ classType }: { classType: string }) {
+  const matchedKey = Object.keys(CLASS_TYPE_BADGES).find((key) =>
+    classType.toLowerCase().includes(key.toLowerCase())
+  );
+  if (!matchedKey) return null;
+  return (
+    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${CLASS_TYPE_BADGES[matchedKey]}`}>
+      {matchedKey}
+    </span>
+  );
+}
+
 function DiffValue({ label, otf, strava, unit }: { label: string; otf: number; strava: number | null; unit?: string }) {
   const diff = strava !== null ? otf - strava : null;
   const hasDiff = diff !== null && Math.abs(diff) > 0;
 
   return (
-    <div className="flex items-center justify-between text-sm">
+    <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-sm">
       <span className="text-text-secondary">{label}</span>
       <div className="flex items-center gap-2">
         <span className="text-otf-orange font-medium">{otf}{unit}</span>
@@ -79,13 +101,14 @@ export function WorkoutCard({ comparison, onSync, syncing }: WorkoutCardProps) {
   });
 
   return (
-    <div className="bg-surface rounded-xl border border-surface-lighter p-5 hover:border-otf-orange/30 transition-colors">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-text-primary">
+    <div className="bg-surface rounded-xl border border-surface-lighter p-4 sm:p-5 hover:border-otf-orange/30 transition-colors">
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <h3 className="font-semibold text-text-primary truncate">
               {otf?.class_type || strava?.name || 'Workout'}
             </h3>
+            {otf?.class_type && <ClassTypeBadge classType={otf.class_type} />}
             <StatusBadge status={status} needsFix={needs_fix} />
           </div>
           <p className="text-sm text-text-muted">{dateStr} at {timeStr}</p>

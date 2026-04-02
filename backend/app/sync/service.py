@@ -31,11 +31,15 @@ def sync_workout(
         if t.get("timestamp") and t.get("hr")
     ]
 
-    # Determine sport type from class type
-    class_type = otf_workout.get("class_type", "").lower()
-    if "tread" in class_type or "run" in class_type:
+    # Determine sport type from OTF class type
+    # Tread 50 → running, Row 50 → rowing, everything else → training
+    _RUNNING_CLASSES = {"tread 50"}
+    _ROWING_CLASSES = {"row 50"}
+    class_type = otf_workout.get("class_type", "").strip()
+    class_type_lower = class_type.lower()
+    if class_type_lower in _RUNNING_CLASSES:
         sport_type = "running"
-    elif "row" in class_type:
+    elif class_type_lower in _ROWING_CLASSES:
         sport_type = "rowing"
     else:
         sport_type = "training"
@@ -68,7 +72,7 @@ def sync_workout(
             pass  # If delete fails, user gets a duplicate — acceptable
 
     # Upload FIT file to Strava
-    workout_name = f"Orangetheory {otf_workout.get('class_type', 'Workout')}"
+    workout_name = f"Orangetheory - {otf_workout.get('class_type', 'Workout')}"
     description = (
         f"{otf_workout['calories']} cal | "
         f"{otf_workout['splat_points']} splats | "

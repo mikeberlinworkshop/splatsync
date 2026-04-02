@@ -50,7 +50,7 @@ export function Landing() {
             Free &amp; open source
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-extrabold text-text-primary leading-tight mb-6">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-text-primary leading-tight mb-6">
             Your OTF workouts
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-otf-orange to-strava-orange">
@@ -60,7 +60,7 @@ export function Landing() {
             on Strava
           </h1>
 
-          <p className="text-lg text-text-secondary max-w-xl mx-auto mb-10">
+          <p className="text-base sm:text-lg text-text-secondary max-w-xl mx-auto mb-8 sm:mb-10">
             Apple Watch gets your OTF calories and heart rate wrong.
             SplatSync replaces your Strava activity with the real data
             from OTF's chest monitor — splat points and all.
@@ -69,14 +69,14 @@ export function Landing() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button
               onClick={() => setShowOtfModal(true)}
-              className="flex items-center gap-2 px-8 py-3.5 bg-otf-orange hover:bg-otf-orange-dark text-white font-semibold rounded-xl transition-colors text-lg"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 bg-otf-orange hover:bg-otf-orange-dark text-white font-semibold rounded-xl transition-colors text-lg"
             >
               <Flame size={20} />
               Connect OTF
             </button>
             <button
               onClick={handleStravaConnect}
-              className="flex items-center gap-2 px-8 py-3.5 bg-strava-orange hover:bg-strava-orange/90 text-white font-semibold rounded-xl transition-colors text-lg"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 bg-strava-orange hover:bg-strava-orange/90 text-white font-semibold rounded-xl transition-colors text-lg"
             >
               Connect Strava
               <ArrowRight size={20} />
@@ -84,7 +84,7 @@ export function Landing() {
           </div>
 
           {/* Features */}
-          <div className="grid md:grid-cols-3 gap-6 mt-20">
+          <div className="grid md:grid-cols-3 gap-4 sm:gap-6 mt-12 sm:mt-20">
             <div className="bg-surface border border-surface-lighter rounded-xl p-6 text-left">
               <div className="p-2 bg-otf-orange/10 rounded-lg w-fit mb-3">
                 <Heart size={20} className="text-otf-orange" />
