@@ -183,10 +183,10 @@ export function Dashboard() {
     <div className="min-h-screen">
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
-        <div className="flex items-center gap-2">
+        <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Zap size={24} className="text-otf-orange" />
           <span className="text-xl font-bold text-text-primary">SplatSync</span>
-        </div>
+        </a>
         <div className="flex items-center gap-3">
           {authStatus.email && (
             <span className="text-sm text-text-secondary">{authStatus.email}</span>
