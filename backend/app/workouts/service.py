@@ -51,10 +51,10 @@ def get_otf_workouts(email: str, password: str, days: int = 30) -> list[dict]:
                 "duration_minutes": (w.active_time_seconds or 0) // 60,
                 "class_type": w.otf_class.name if w.otf_class else "Unknown",
                 "zone_minutes": zone_minutes,
-                "tread_distance_miles": w.treadmill_data.total_distance.metric_value if w.treadmill_data else None,
-                "tread_avg_speed": w.treadmill_data.avg_speed.metric_value if w.treadmill_data else None,
+                "tread_distance_miles": float(w.treadmill_data.total_distance.metric_value) if w.treadmill_data else None,
+                "tread_avg_speed": float(w.treadmill_data.avg_speed.metric_value) if w.treadmill_data else None,
                 "tread_avg_pace": str(w.treadmill_data.avg_pace) if w.treadmill_data else None,
-                "rower_distance_meters": w.rower_data.total_distance.metric_value if w.rower_data else None,
+                "rower_distance_meters": float(w.rower_data.total_distance.metric_value) if w.rower_data else None,
             }
         )
 
@@ -168,7 +168,7 @@ def match_workouts(
                         "calories": cal_diff,
                         "avg_hr": (otf["avg_hr"] or 0) - (best_match["avg_hr"] or 0),
                         "max_hr": (otf["max_hr"] or 0) - (best_match["max_hr"] or 0),
-                        "distance": (otf.get("tread_distance_miles", 0) or 0) * 1609.34 - (best_match.get("distance", 0) or 0),
+                        "distance": float(otf.get("tread_distance_miles", 0) or 0) * 1609.34 - float(best_match.get("distance", 0) or 0),
                     },
                     "needs_fix": abs(cal_diff) > 20
                     or abs((otf["avg_hr"] or 0) - (best_match["avg_hr"] or 0)) > 5,
