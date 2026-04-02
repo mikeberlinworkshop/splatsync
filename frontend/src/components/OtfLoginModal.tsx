@@ -79,8 +79,8 @@ export function OtfLoginModal({ open, onClose, onLogin }: OtfLoginModalProps) {
         <div className="mt-4 flex items-start gap-2 text-xs text-text-muted">
           <Shield size={14} className="mt-0.5 shrink-0" />
           <p>
-            Your password is used once to authenticate and is never stored.
-            We only cache your session token, encrypted at rest.{' '}
+            Your credentials are encrypted at rest and only used to fetch your
+            workout data. Disconnect anytime to delete them.{' '}
             <a href="https://github.com" className="text-otf-orange hover:underline">
               View source code
             </a>

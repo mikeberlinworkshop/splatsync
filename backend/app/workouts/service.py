@@ -66,13 +66,11 @@ def get_otf_telemetry(email: str, password: str, workout_id: str) -> list[dict]:
     telemetry = otf.workouts.get_telemetry(workout_id)
 
     hr_data = []
-    if telemetry and telemetry.telemetry_items:
-        for item in telemetry.telemetry_items:
+    if telemetry and telemetry.telemetry:
+        for item in telemetry.telemetry:
             hr_data.append(
                 {
-                    "timestamp": item.actual_timestamp
-                    if hasattr(item, "actual_timestamp")
-                    else None,
+                    "timestamp": item.timestamp,
                     "hr": item.hr if hasattr(item, "hr") else 0,
                     "calories": getattr(item, "agg_calories", 0),
                     "splats": getattr(item, "agg_splats", 0),
@@ -99,8 +97,8 @@ def get_strava_activities(strava_token: StravaToken, days: int = 30) -> list[dic
                 "calories": getattr(a, "calories", None),
                 "avg_hr": getattr(a, "average_heartrate", None),
                 "max_hr": getattr(a, "max_heartrate", None),
-                "distance": a.distance.num if a.distance else None,
-                "duration_minutes": (a.elapsed_time.total_seconds() / 60)
+                "distance": float(a.distance) if a.distance else None,
+                "duration_minutes": (float(a.elapsed_time) / 60)
                 if a.elapsed_time
                 else 0,
                 "sport_type": str(a.sport_type) if a.sport_type else "Workout",

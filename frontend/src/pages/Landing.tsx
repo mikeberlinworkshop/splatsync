@@ -14,8 +14,13 @@ export function Landing() {
   };
 
   const handleStravaConnect = async () => {
-    const { url } = await api.stravaConnectUrl();
-    window.location.href = url;
+    try {
+      const { url } = await api.stravaConnectUrl();
+      window.location.href = url;
+    } catch {
+      // Not logged in yet — need to connect OTF first
+      setShowOtfModal(true);
+    }
   };
 
   return (

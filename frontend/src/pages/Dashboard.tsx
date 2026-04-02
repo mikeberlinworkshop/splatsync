@@ -91,8 +91,8 @@ export function Dashboard() {
 
   const handleOtfLogin = async (email: string, password: string) => {
     await api.otfLogin(email, password);
-    await checkAuth();
-    if (authStatus.strava_connected) {
+    const status = await checkAuth();
+    if (status?.strava_connected) {
       loadComparisons();
     }
   };

@@ -56,12 +56,16 @@ def sync_workout(
         sport_type=sport_type,
     )
 
-    # Delete existing Strava activity if replacing
+    # Delete existing Strava activity if replacing (stravalib v2 lacks delete_activity)
     if existing_strava_id:
         try:
-            client.delete_activity(existing_strava_id)
+            import httpx
+            httpx.delete(
+                f"https://www.strava.com/api/v3/activities/{existing_strava_id}",
+                headers={"Authorization": f"Bearer {decrypt(strava_token.access_token)}"},
+            )
         except Exception:
-            pass
+            pass  # If delete fails, user gets a duplicate — acceptable
 
     # Upload FIT file to Strava
     workout_name = f"Orangetheory {otf_workout.get('class_type', 'Workout')}"
