@@ -39,7 +39,7 @@ function ClassTypeBadge({ classType }: { classType: string }) {
   const colors = matchedKey ? CLASS_TYPE_COLORS[matchedKey] : 'bg-surface-lighter text-text-secondary';
   const label = matchedKey || classType;
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${colors}`}>
+    <span className={`px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap ${colors}`}>
       {label}
     </span>
   );
@@ -48,27 +48,27 @@ function ClassTypeBadge({ classType }: { classType: string }) {
 function StatusBadge({ status, needsFix }: { status: string; needsFix: boolean }) {
   if (status === 'synced') {
     return (
-      <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400 whitespace-nowrap">
+      <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 whitespace-nowrap">
         Synced
       </span>
     );
   }
   if (status === 'otf_only') {
     return (
-      <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 whitespace-nowrap">
+      <span className="px-3 py-1 rounded-full text-xs font-medium bg-sky-500/20 text-sky-400 whitespace-nowrap">
         OTF Only
       </span>
     );
   }
   if (needsFix) {
     return (
-      <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-otf-orange/20 text-otf-orange-light whitespace-nowrap">
+      <span className="px-3 py-1 rounded-full text-xs font-medium bg-otf-orange/20 text-otf-orange-light whitespace-nowrap">
         Needs Fix
       </span>
     );
   }
   return (
-    <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400 whitespace-nowrap">
+    <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 whitespace-nowrap">
       Matched
     </span>
   );
@@ -82,14 +82,26 @@ function CalDiff({ diff }: { diff: number }) {
   return <span className={`font-medium ${color}`}>{diff > 0 ? '+' : ''}{Math.round(diff)}</span>;
 }
 
+// --- Row color bar ---
+
+function getRowAccent(comparison: Comparison): string {
+  if (comparison.status === 'synced' || (!comparison.needs_fix && comparison.strava)) {
+    return 'border-l-green-500/40';
+  }
+  if (comparison.needs_fix) {
+    return 'border-l-otf-orange/60';
+  }
+  return 'border-l-transparent';
+}
+
 // --- Table (Desktop) ---
 
 function DesktopTable({ comparisons, onSync, syncingId, expandedId, onToggle }: WorkoutTableProps & { expandedId: string | null; onToggle: (id: string) => void }) {
   return (
-    <div className="hidden md:block overflow-x-auto">
+    <div className="hidden md:block overflow-x-auto rounded-xl border border-surface-lighter">
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-text-muted text-xs uppercase tracking-wider border-b border-surface-lighter">
+          <tr className="text-text-muted text-xs uppercase tracking-wider bg-surface-light/50">
             <th className="py-3 px-3 text-left w-8"></th>
             <th className="py-3 px-3 text-left">Date</th>
             <th className="py-3 px-3 text-left">Class</th>
@@ -116,14 +128,14 @@ function DesktopTable({ comparisons, onSync, syncingId, expandedId, onToggle }: 
               <TableRowGroup key={rowId}>
                 <tr
                   onClick={() => onToggle(rowId)}
-                  className={`cursor-pointer transition-colors ${
+                  className={`cursor-pointer transition-colors duration-150 border-l-3 ${getRowAccent(c)} ${
                     i % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.02]'
                   } hover:bg-white/[0.05] ${isExpanded ? 'bg-white/[0.05]' : ''}`}
                 >
                   <td className="py-3 px-3 text-text-muted">
                     {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                   </td>
-                  <td className="py-3 px-3 text-text-primary whitespace-nowrap">
+                  <td className="py-3 px-3 text-text-primary whitespace-nowrap font-medium">
                     {formatDate(workout.date)}
                   </td>
                   <td className="py-3 px-3">
@@ -159,7 +171,7 @@ function DesktopTable({ comparisons, onSync, syncingId, expandedId, onToggle }: 
                           onSync(c);
                         }}
                         disabled={syncingId === c.otf.id}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-otf-orange hover:bg-otf-orange-dark text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-otf-orange hover:bg-otf-orange-dark text-white text-xs font-semibold rounded-lg transition-all duration-150 disabled:opacity-50 shadow-md shadow-otf-orange/20 hover:shadow-otf-orange/30"
                       >
                         {syncingId === c.otf.id ? (
                           <><RefreshCw size={12} className="animate-spin" /> Syncing</>
@@ -213,7 +225,7 @@ function MobileList({ comparisons, onSync, syncingId, expandedId, onToggle }: Wo
         const stravaDist = c.strava?.distance;
 
         return (
-          <div key={rowId} className="bg-surface rounded-lg border border-surface-lighter">
+          <div key={rowId} className={`bg-surface rounded-lg border border-surface-lighter border-l-3 ${getRowAccent(c)}`}>
             <button
               onClick={() => onToggle(rowId)}
               className="w-full text-left px-4 py-3"
@@ -270,7 +282,7 @@ function MobileList({ comparisons, onSync, syncingId, expandedId, onToggle }: Wo
                       e.stopPropagation();
                       onSync(c);
                     }}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-otf-orange hover:bg-otf-orange-dark text-white text-xs font-medium rounded-lg ml-2"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 bg-otf-orange hover:bg-otf-orange-dark text-white text-xs font-semibold rounded-lg ml-2 shadow-md shadow-otf-orange/20 transition-all duration-150"
                   >
                     {syncingId === c.otf.id ? (
                       <><RefreshCw size={10} className="animate-spin" /> Syncing</>

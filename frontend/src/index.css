@@ -18,12 +18,21 @@
   --color-text-muted: #6b6b85;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   background-color: #0f0f1a;
   color: var(--color-text-primary);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-text-size-adjust: 100%;
+}
+
+::selection {
+  background-color: rgba(240, 90, 40, 0.3);
+  color: #fff;
 }
 
 select {

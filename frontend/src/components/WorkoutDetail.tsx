@@ -19,9 +19,9 @@ function mpsToMph(mps: number): string {
 function Stat({ label, value, unit, color }: { label: string; value: string | number | null | undefined; unit?: string; color?: string }) {
   if (value == null) return null;
   return (
-    <div className="flex justify-between items-center py-1.5">
+    <div className="flex justify-between items-center py-2 border-b border-surface-lighter/30 last:border-b-0">
       <span className="text-text-secondary text-sm">{label}</span>
-      <span className={`font-medium text-sm ${color || 'text-text-primary'}`}>
+      <span className={`font-semibold text-sm ${color || 'text-text-primary'}`}>
         {typeof value === 'number' ? value.toLocaleString('en-US') : value}{unit || ''}
       </span>
     </div>
@@ -36,12 +36,12 @@ export function WorkoutDetail({ comparison, onSync, syncingId }: WorkoutDetailPr
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* OTF Column */}
         {otf && (
-          <div>
-            <h4 className="text-xs uppercase tracking-wider text-otf-orange font-semibold mb-3 flex items-center gap-2">
+          <div className="bg-otf-orange/[0.03] rounded-xl p-4 border border-otf-orange/10">
+            <h4 className="text-xs uppercase tracking-wider text-otf-orange font-semibold mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-otf-orange inline-block"></span>
               OTF Data
             </h4>
-            <div className="space-y-0 divide-y divide-surface-lighter/50">
+            <div>
               <Stat label="Calories" value={otf.calories} color="text-otf-orange" />
               <Stat label="Avg HR" value={otf.avg_hr} unit=" bpm" color="text-otf-orange" />
               <Stat label="Max HR" value={otf.max_hr} unit=" bpm" color="text-otf-orange" />
@@ -58,7 +58,8 @@ export function WorkoutDetail({ comparison, onSync, syncingId }: WorkoutDetailPr
               <Stat label="Duration" value={`${otf.duration_minutes} min`} color="text-otf-orange" />
             </div>
             {otf.zone_minutes && (
-              <div className="mt-4">
+              <div className="mt-5 pt-4 border-t border-otf-orange/10">
+                <p className="text-xs uppercase tracking-wider text-text-muted font-semibold mb-3">HR Zone Distribution</p>
                 <ZoneBar zones={otf.zone_minutes} />
               </div>
             )}
@@ -67,12 +68,12 @@ export function WorkoutDetail({ comparison, onSync, syncingId }: WorkoutDetailPr
 
         {/* Strava Column */}
         {strava && (
-          <div>
-            <h4 className="text-xs uppercase tracking-wider text-strava-orange font-semibold mb-3 flex items-center gap-2">
+          <div className="bg-strava-orange/[0.03] rounded-xl p-4 border border-strava-orange/10">
+            <h4 className="text-xs uppercase tracking-wider text-strava-orange font-semibold mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-strava-orange inline-block"></span>
               Strava Data
             </h4>
-            <div className="space-y-0 divide-y divide-surface-lighter/50">
+            <div>
               <Stat label="Calories" value={strava.calories} color="text-strava-orange" />
               <Stat label="Avg HR" value={strava.avg_hr} unit=" bpm" color="text-strava-orange" />
               <Stat label="Max HR" value={strava.max_hr} unit=" bpm" color="text-strava-orange" />
@@ -90,7 +91,7 @@ export function WorkoutDetail({ comparison, onSync, syncingId }: WorkoutDetailPr
 
         {/* OTF only — show single column */}
         {!strava && otf && (
-          <div className="flex items-center justify-center text-text-muted text-sm">
+          <div className="flex items-center justify-center text-text-muted text-sm rounded-xl border border-dashed border-surface-lighter p-8">
             No matching Strava activity found.
           </div>
         )}
@@ -98,21 +99,23 @@ export function WorkoutDetail({ comparison, onSync, syncingId }: WorkoutDetailPr
 
       {/* Sync button at bottom of detail */}
       {needs_fix && otf && (
-        <div className="mt-6 pt-4 border-t border-surface-lighter flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-xs text-text-muted max-w-md">
-            Replaces your Strava activity with accurate OTF heart rate, calories, and distance data.
-          </p>
-          <button
-            onClick={() => onSync(comparison)}
-            disabled={syncingId === otf.id}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-otf-orange hover:bg-otf-orange-dark text-white font-medium rounded-lg transition-colors disabled:opacity-50 whitespace-nowrap"
-          >
-            {syncingId === otf.id ? (
-              <><RefreshCw size={14} className="animate-spin" /> Syncing...</>
-            ) : (
-              <>Sync to Strava <ArrowRight size={14} /></>
-            )}
-          </button>
+        <div className="mt-6 pt-5 border-t border-surface-lighter">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <p className="text-xs text-text-muted max-w-md leading-relaxed">
+              Replaces your Strava activity with accurate OTF heart rate, calories, and distance data.
+            </p>
+            <button
+              onClick={() => onSync(comparison)}
+              disabled={syncingId === otf.id}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-otf-orange to-strava-orange hover:from-otf-orange-dark hover:to-otf-orange text-white font-semibold rounded-xl transition-all duration-150 disabled:opacity-50 whitespace-nowrap shadow-lg shadow-otf-orange/25 hover:shadow-otf-orange/40 text-base"
+            >
+              {syncingId === otf.id ? (
+                <><RefreshCw size={16} className="animate-spin" /> Syncing...</>
+              ) : (
+                <>Sync to Strava <ArrowRight size={16} /></>
+              )}
+            </button>
+          </div>
         </div>
       )}
     </div>
