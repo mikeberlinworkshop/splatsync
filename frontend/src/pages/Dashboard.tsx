@@ -26,6 +26,14 @@ export function Dashboard() {
   });
   const [showOtfModal, setShowOtfModal] = useState(false);
   const [days, setDays] = useState(30);
+  const [notification, setNotification] = useState<{type: 'success' | 'error'; message: string; url?: string} | null>(null);
+
+  // Auto-dismiss notifications after 5 seconds
+  useEffect(() => {
+    if (!notification) return;
+    const timer = setTimeout(() => setNotification(null), 5000);
+    return () => clearTimeout(timer);
+  }, [notification]);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -96,9 +104,9 @@ export function Dashboard() {
         ...prev,
         needs_fix: Math.max(0, prev.needs_fix - 1),
       }));
-      alert(`Synced! View on Strava: ${result.strava_url}`);
+      setNotification({ type: 'success', message: 'Synced to Strava!', url: result.strava_url });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Sync failed');
+      setNotification({ type: 'error', message: err instanceof Error ? err.message : 'Sync failed' });
     } finally {
       setSyncingId(null);
     }
@@ -132,7 +140,10 @@ export function Dashboard() {
             <span className="text-sm text-text-secondary">{authStatus.email}</span>
           )}
           <button
-            onClick={() => navigate('/')}
+            onClick={async () => {
+              await api.logout();
+              navigate('/');
+            }}
             className="text-text-muted hover:text-text-primary transition-colors"
           >
             <LogOut size={18} />
@@ -141,6 +152,40 @@ export function Dashboard() {
       </nav>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
+        {/* Notification banner */}
+        {notification && (
+          <div
+            className={`mb-6 px-4 py-3 rounded-xl text-sm flex items-center justify-between ${
+              notification.type === 'success'
+                ? 'bg-green-500/10 border border-green-500/20 text-green-400'
+                : 'bg-red-500/10 border border-red-500/20 text-red-400'
+            }`}
+          >
+            <span>
+              {notification.message}
+              {notification.url && (
+                <>
+                  {' '}
+                  <a
+                    href={notification.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-medium hover:brightness-125"
+                  >
+                    View on Strava
+                  </a>
+                </>
+              )}
+            </span>
+            <button
+              onClick={() => setNotification(null)}
+              className="ml-4 opacity-60 hover:opacity-100"
+            >
+              &times;
+            </button>
+          </div>
+        )}
+
         {/* Connection status */}
         {!bothConnected && (
           <div className="bg-surface border border-surface-lighter rounded-xl p-6 mb-8">

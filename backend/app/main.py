@@ -1,7 +1,11 @@
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("splatsync")
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -15,8 +19,10 @@ from app.workouts.router import router as workouts_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info("SplatSync starting up")
     create_db()
     yield
+    logger.info("SplatSync shutting down")
 
 
 app = FastAPI(title="SplatSync", version="0.1.0", lifespan=lifespan)

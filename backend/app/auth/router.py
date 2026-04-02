@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Response
@@ -13,6 +14,7 @@ from app.db import get_session
 from app.models import OtfSession, StravaToken, User
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+logger = logging.getLogger("splatsync")
 
 
 # --- OTF Auth ---
@@ -42,7 +44,9 @@ async def otf_login(
         otf_user = OtfUser(username=body.email, password=body.password)
         otf = Otf(otf_user)
         member = otf.get_member_detail()
+        logger.info("OTF login succeeded for %s", body.email)
     except Exception as e:
+        logger.error("OTF login failed for %s: %s", body.email, e)
         raise HTTPException(status_code=401, detail=f"OTF login failed: {str(e)}")
 
     # Find or create user
@@ -78,7 +82,7 @@ async def otf_login(
         token,
         httponly=True,
         samesite="lax",
-        secure=True,
+        secure=not settings.frontend_url.startswith("http://localhost"),
         max_age=86400 * 30,  # 30 days
     )
 
@@ -137,6 +141,7 @@ async def strava_callback(
             code=code,
         )
     except Exception as e:
+        logger.error("Strava OAuth code exchange failed: %s", e)
         return Response(
             status_code=302,
             headers={"Location": f"{settings.frontend_url}/?error=strava_auth_failed"},
@@ -180,7 +185,7 @@ async def strava_callback(
         token,
         httponly=True,
         samesite="lax",
-        secure=True,
+        secure=not settings.frontend_url.startswith("http://localhost"),
         max_age=86400 * 30,
     )
     return resp
@@ -206,6 +211,12 @@ async def auth_status(
         strava_athlete_id=strava.athlete_id if strava else None,
         email=user.email,
     )
+
+
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie("splatsync_token")
+    return {"message": "Logged out"}
 
 
 @router.post("/otf/disconnect")

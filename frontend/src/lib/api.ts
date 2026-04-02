@@ -31,6 +31,7 @@ export const api = {
       strava_athlete_id: number | null;
       email: string | null;
     }>('/auth/status'),
+  logout: () => request<{ message: string }>('/auth/logout', { method: 'POST' }),
   otfDisconnect: () => request('/auth/otf/disconnect', { method: 'POST' }),
   stravaDisconnect: () => request('/auth/strava/disconnect', { method: 'POST' }),
 

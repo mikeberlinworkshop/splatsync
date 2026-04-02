@@ -40,6 +40,7 @@ def execute_sync(
             otf_email=decrypt(otf_session.otf_email),
             otf_password=decrypt(otf_session.otf_password),
             strava_token=strava_token,
+            session=session,
             otf_workout=body.otf_workout,
             existing_strava_id=body.strava_activity_id,
         )

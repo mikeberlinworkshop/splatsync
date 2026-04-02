@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
 
 from app.auth.crypto import decrypt
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/workouts", tags=["workouts"])
 
 @router.get("/compare")
 def compare_workouts(
-    days: int = 30,
+    days: int = Query(default=30, ge=1, le=365),
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
@@ -43,7 +43,7 @@ def compare_workouts(
             detail=f"OTF session error: {str(e)}. Please reconnect.",
         )
 
-    strava_activities = get_strava_activities(strava_token, days=days)
+    strava_activities = get_strava_activities(strava_token, session, days=days)
 
     comparisons = match_workouts(otf_workouts, strava_activities)
 

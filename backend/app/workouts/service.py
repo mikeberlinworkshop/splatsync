@@ -6,9 +6,10 @@ and computes diffs for the comparison UI.
 
 from datetime import datetime, timedelta, timezone
 
+from sqlmodel import Session
 from stravalib import Client as StravaClient
 
-from app.auth.crypto import decrypt
+from app.auth.strava_refresh import get_strava_client
 from app.models import StravaToken
 
 
@@ -80,9 +81,9 @@ def get_otf_telemetry(email: str, password: str, workout_id: str) -> list[dict]:
     return hr_data
 
 
-def get_strava_activities(strava_token: StravaToken, days: int = 30) -> list[dict]:
+def get_strava_activities(strava_token: StravaToken, session: Session, days: int = 30) -> list[dict]:
     """Fetch recent Strava activities."""
-    client = StravaClient(access_token=decrypt(strava_token.access_token))
+    client = get_strava_client(strava_token, session)
 
     after = datetime.utcnow() - timedelta(days=days)
     activities = client.get_activities(after=after)

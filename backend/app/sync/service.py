@@ -1,25 +1,31 @@
 """Sync service — generates FIT files and uploads to Strava."""
 
 import io
+import logging
 from datetime import datetime
 
+from sqlmodel import Session
 from stravalib import Client as StravaClient
 
 from app.auth.crypto import decrypt
+from app.auth.strava_refresh import get_strava_client
 from app.models import StravaToken
 from app.workouts.fit_generator import generate_fit_file
 from app.workouts.service import get_otf_telemetry
+
+logger = logging.getLogger("splatsync")
 
 
 def sync_workout(
     otf_email: str,
     otf_password: str,
     strava_token: StravaToken,
+    session: Session,
     otf_workout: dict,
     existing_strava_id: int | None = None,
 ) -> dict:
     """Generate a FIT file from OTF data and upload to Strava."""
-    client = StravaClient(access_token=decrypt(strava_token.access_token))
+    client = get_strava_client(strava_token, session)
 
     # Fetch full telemetry
     telemetry = get_otf_telemetry(otf_email, otf_password, otf_workout["id"])
@@ -68,8 +74,9 @@ def sync_workout(
                 f"https://www.strava.com/api/v3/activities/{existing_strava_id}",
                 headers={"Authorization": f"Bearer {decrypt(strava_token.access_token)}"},
             )
+            logger.info("Deleted existing Strava activity %s before re-upload", existing_strava_id)
         except Exception:
-            pass  # If delete fails, user gets a duplicate — acceptable
+            logger.warning("Failed to delete Strava activity %s, may create duplicate", existing_strava_id)
 
     # Upload FIT file to Strava
     workout_name = f"Orangetheory - {otf_workout.get('class_type', 'Workout')}"
@@ -87,6 +94,7 @@ def sync_workout(
     )
 
     activity = upload.wait()
+    logger.info("Synced OTF workout %s → Strava activity %s", otf_workout.get("id"), activity.id)
 
     return {
         "strava_activity_id": activity.id,
