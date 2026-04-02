@@ -4,7 +4,7 @@ Pulls workouts from both OTF and Strava, matches them by date/time,
 and computes diffs for the comparison UI.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from stravalib import Client as StravaClient
 
@@ -118,11 +118,20 @@ def match_workouts(
     matched_strava_ids = set()
     comparisons = []
 
+    def _parse_naive(dt_val) -> datetime | None:
+        """Parse a datetime and strip timezone info for comparison."""
+        if not dt_val:
+            return None
+        if isinstance(dt_val, str):
+            dt_val = datetime.fromisoformat(dt_val)
+        if dt_val.tzinfo is not None:
+            dt_val = dt_val.replace(tzinfo=None)
+        return dt_val
+
     for otf in otf_workouts:
-        otf_date_str = otf["date"]
-        if not otf_date_str:
+        otf_date = _parse_naive(otf["date"])
+        if not otf_date:
             continue
-        otf_date = datetime.fromisoformat(otf_date_str) if isinstance(otf_date_str, str) else otf_date_str
 
         best_match = None
         best_diff = None
@@ -130,10 +139,9 @@ def match_workouts(
         for strava in strava_activities:
             if strava["id"] in matched_strava_ids:
                 continue
-            strava_date_str = strava["date"]
-            if not strava_date_str:
+            strava_date = _parse_naive(strava["date"])
+            if not strava_date:
                 continue
-            strava_date = datetime.fromisoformat(strava_date_str) if isinstance(strava_date_str, str) else strava_date_str
 
             diff = abs((otf_date - strava_date).total_seconds())
             if diff <= window.total_seconds():
