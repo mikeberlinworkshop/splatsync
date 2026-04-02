@@ -52,9 +52,9 @@ export function Landing() {
           </h1>
 
           <p className="text-base sm:text-lg text-text-secondary max-w-xl mx-auto mb-8 sm:mb-10">
-            Apple Watch gets your OTF calories and heart rate wrong.
-            SplatSync replaces your Strava activity with the real data
-            from OTF's chest monitor — splat points and all.
+            Your Strava says you ran 1.2 miles. OTF says 1.8.
+            SplatSync replaces your Strava activity with the real
+            distance, speed, calories, and heart rate from OTF.
           </p>
 
           <div className="flex flex-col items-center gap-4">
@@ -76,20 +76,20 @@ export function Landing() {
               <div className="p-2 bg-otf-orange/10 rounded-lg w-fit mb-3">
                 <Heart size={20} className="text-otf-orange" />
               </div>
-              <h3 className="font-semibold text-text-primary mb-2">Real Heart Rate</h3>
+              <h3 className="font-semibold text-text-primary mb-2">Correct Distance &amp; Speed</h3>
               <p className="text-sm text-text-secondary">
-                OTF's chest/arm monitor samples 4x/sec. Your Apple Watch? Once every 5 seconds.
-                Get the accurate data.
+                The treadmill knows exactly how far you ran. Your Apple Watch guesses
+                from wrist motion. Get the real numbers.
               </p>
             </div>
             <div className="bg-surface border border-surface-lighter rounded-xl p-6 text-left">
               <div className="p-2 bg-otf-orange/10 rounded-lg w-fit mb-3">
                 <Flame size={20} className="text-otf-orange" />
               </div>
-              <h3 className="font-semibold text-text-primary mb-2">Correct Calories</h3>
+              <h3 className="font-semibold text-text-primary mb-2">Real Calories &amp; HR</h3>
               <p className="text-sm text-text-secondary">
-                OTF's calorie formula uses their high-fidelity HR data. Stop
-                seeing the wrong burn in Strava.
+                OTF's chest monitor samples 4x/sec with a precise calorie formula.
+                Your Watch samples every 5 seconds and guesses.
               </p>
             </div>
             <div className="bg-surface border border-surface-lighter rounded-xl p-6 text-left">

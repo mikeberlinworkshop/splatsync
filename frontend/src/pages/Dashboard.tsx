@@ -47,6 +47,11 @@ export function Dashboard() {
   }, [navigate]);
 
   const loadComparisons = useCallback(async () => {
+    // Don't try to load if both accounts aren't connected
+    if (!authStatus.otf_connected || !authStatus.strava_connected) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError('');
     try {
@@ -54,11 +59,17 @@ export function Dashboard() {
       setComparisons(data.comparisons);
       setSummary(data.summary);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load workouts');
+      const msg = err instanceof Error ? err.message : 'Failed to load workouts';
+      if (msg.includes('Strava not connected') || msg.includes('OTF not connected')) {
+        // Don't show as error — just refresh auth status
+        await checkAuth();
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
-  }, [days]);
+  }, [days, authStatus.otf_connected, authStatus.strava_connected, checkAuth]);
 
   useEffect(() => {
     checkAuth().then((status) => {
