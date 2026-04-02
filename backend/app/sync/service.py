@@ -84,13 +84,17 @@ def sync_workout(
         tread_distance_meters=distance_meters,
     )
 
-    # Delete existing Strava activity if replacing (stravalib v2 lacks delete_activity)
+    # Delete existing Strava activity if replacing
+    logger.info("Delete check: existing_strava_id=%s", existing_strava_id)
     if existing_strava_id:
         try:
             import httpx
+            # Use the same refreshed token as the client
+            access_token = client.access_token
+            logger.info("Attempting DELETE /activities/%s", existing_strava_id)
             resp = httpx.delete(
                 f"https://www.strava.com/api/v3/activities/{existing_strava_id}",
-                headers={"Authorization": f"Bearer {decrypt(strava_token.access_token)}"},
+                headers={"Authorization": f"Bearer {access_token}"},
             )
             if resp.status_code == 204:
                 logger.info("Deleted existing Strava activity %s before re-upload", existing_strava_id)
