@@ -80,6 +80,10 @@ export interface OtfWorkout {
     orange: number;
     red: number;
   };
+  tread_distance_miles?: number;
+  tread_avg_speed?: number;
+  tread_avg_pace?: string;
+  rower_distance_meters?: number;
 }
 
 export interface StravaActivity {
@@ -90,6 +94,8 @@ export interface StravaActivity {
   avg_hr: number | null;
   max_hr: number | null;
   distance: number | null;
+  avg_speed: number | null;
+  max_speed: number | null;
   duration_minutes: number;
   sport_type: string;
 }
@@ -102,6 +108,7 @@ export interface Comparison {
     calories: number;
     avg_hr: number;
     max_hr: number;
+    distance: number;
   } | null;
   needs_fix: boolean;
 }

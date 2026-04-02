@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Zap, RefreshCw, LogOut, Flame } from 'lucide-react';
+import { Zap, RefreshCw, LogOut, Flame, ArrowRight } from 'lucide-react';
 import { api, type Comparison } from '@/lib/api';
-import { WorkoutCard } from '@/components/WorkoutCard';
+import { WorkoutTable } from '@/components/WorkoutTable';
 import { SummaryCards } from '@/components/SummaryCards';
 import { OtfLoginModal } from '@/components/OtfLoginModal';
 
@@ -111,6 +111,20 @@ export function Dashboard() {
       setSyncingId(null);
     }
   };
+
+  const [syncingAll, setSyncingAll] = useState(false);
+
+  const handleSyncAll = async () => {
+    const toSync = comparisons.filter((c) => c.needs_fix && c.otf);
+    if (toSync.length === 0) return;
+    setSyncingAll(true);
+    for (const c of toSync) {
+      await handleSync(c);
+    }
+    setSyncingAll(false);
+  };
+
+  const needsFixCount = comparisons.filter((c) => c.needs_fix && c.otf).length;
 
   const handleOtfLogin = async (email: string, password: string) => {
     await api.otfLogin(email, password);
@@ -264,6 +278,23 @@ export function Dashboard() {
               </div>
             )}
 
+            {/* Sync All button */}
+            {!loading && !error && needsFixCount > 0 && (
+              <div className="mb-6">
+                <button
+                  onClick={handleSyncAll}
+                  disabled={syncingAll || syncingId !== null}
+                  className="flex items-center gap-2 px-6 py-3 bg-otf-orange hover:bg-otf-orange-dark text-white font-semibold rounded-xl transition-colors disabled:opacity-50 shadow-lg shadow-otf-orange/20"
+                >
+                  {syncingAll ? (
+                    <><RefreshCw size={18} className="animate-spin" /> Syncing all...</>
+                  ) : (
+                    <>Sync All ({needsFixCount} workout{needsFixCount !== 1 ? 's' : ''}) <ArrowRight size={18} /></>
+                  )}
+                </button>
+              </div>
+            )}
+
             {loading && (
               <div className="flex items-center justify-center py-20">
                 <div className="flex items-center gap-3 text-text-secondary">
@@ -285,16 +316,13 @@ export function Dashboard() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {comparisons.map((c, i) => (
-                <WorkoutCard
-                  key={c.otf?.id || c.strava?.id || i}
-                  comparison={c}
-                  onSync={handleSync}
-                  syncing={syncingId === c.otf?.id}
-                />
-              ))}
-            </div>
+            {!loading && !error && comparisons.length > 0 && (
+              <WorkoutTable
+                comparisons={comparisons}
+                onSync={handleSync}
+                syncingId={syncingId}
+              />
+            )}
           </>
         )}
       </main>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Flame, ArrowRight, Zap, Heart, BarChart3, ExternalLink } from 'lucide-react';
+import { Flame, Zap, Heart, BarChart3, ExternalLink } from 'lucide-react';
 import { OtfLoginModal } from '@/components/OtfLoginModal';
 import { api } from '@/lib/api';
 
@@ -13,15 +13,6 @@ export function Landing() {
     navigate('/dashboard');
   };
 
-  const handleStravaConnect = async () => {
-    try {
-      const { url } = await api.stravaConnectUrl();
-      window.location.href = url;
-    } catch {
-      // Not logged in yet — need to connect OTF first
-      setShowOtfModal(true);
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -66,21 +57,17 @@ export function Landing() {
             from OTF's chest monitor — splat points and all.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col items-center gap-4">
             <button
               onClick={() => setShowOtfModal(true)}
               className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 bg-otf-orange hover:bg-otf-orange-dark text-white font-semibold rounded-xl transition-colors text-lg"
             >
               <Flame size={20} />
-              Connect OTF
+              Get Started — Connect OTF
             </button>
-            <button
-              onClick={handleStravaConnect}
-              className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 bg-strava-orange hover:bg-strava-orange/90 text-white font-semibold rounded-xl transition-colors text-lg"
-            >
-              Connect Strava
-              <ArrowRight size={20} />
-            </button>
+            <p className="text-sm text-text-muted">
+              Sign in with your Orangetheory account, then connect Strava
+            </p>
           </div>
 
           {/* Features */}
