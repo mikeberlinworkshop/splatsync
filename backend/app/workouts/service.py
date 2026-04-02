@@ -108,7 +108,7 @@ def get_strava_activities(strava_token: StravaToken, session: Session, days: int
                 "duration_minutes": (float(a.elapsed_time) / 60)
                 if a.elapsed_time
                 else 0,
-                "sport_type": str(a.sport_type) if a.sport_type else "Workout",
+                "sport_type": a.sport_type.root if a.sport_type and hasattr(a.sport_type, "root") else str(a.sport_type or "Workout"),
             }
         )
 

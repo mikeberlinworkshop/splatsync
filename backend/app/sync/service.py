@@ -84,13 +84,15 @@ def sync_workout(
         tread_distance_meters=distance_meters,
     )
 
-    # Delete existing Strava activity if replacing
+    # Delete or mark existing Strava activity if replacing.
+    # NOTE: Strava only allows deleting activities created by the same OAuth app.
+    # Activities from Apple Health / Apple Watch / other apps will return 401/404.
+    # In that case, we fall back to renaming the old activity to mark it as replaced.
     logger.info("Delete check: existing_strava_id=%s", existing_strava_id)
     if existing_strava_id:
         try:
             import httpx
-            # Use the same refreshed token as the client
-            access_token = client.access_token
+            access_token = str(client.access_token)
             logger.info("Attempting DELETE /activities/%s", existing_strava_id)
             resp = httpx.delete(
                 f"https://www.strava.com/api/v3/activities/{existing_strava_id}",
@@ -100,9 +102,23 @@ def sync_workout(
                 logger.info("Deleted existing Strava activity %s before re-upload", existing_strava_id)
             else:
                 logger.warning(
-                    "Strava DELETE returned %s for activity %s: %s — may create duplicate",
+                    "Strava DELETE returned %s for activity %s: %s — falling back to rename",
                     resp.status_code, existing_strava_id, resp.text[:200],
                 )
+                # Fall back: rename the old activity so the user knows it was replaced.
+                # This works for any activity the user owns, regardless of which app created it.
+                try:
+                    client.update_activity(
+                        activity_id=existing_strava_id,
+                        name="[Replaced by SplatSync]",
+                        description="This activity was replaced by a SplatSync upload with corrected OTF data.",
+                    )
+                    logger.info("Renamed Strava activity %s as replaced", existing_strava_id)
+                except Exception as rename_exc:
+                    logger.warning(
+                        "Could not rename Strava activity %s: %s — may create duplicate",
+                        existing_strava_id, rename_exc,
+                    )
         except Exception as exc:
             logger.warning("Failed to delete Strava activity %s: %s — may create duplicate", existing_strava_id, exc)
 
